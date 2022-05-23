@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 import socket
-
+import ssl
 import argparse
 import base64
 import calendar
@@ -518,16 +518,18 @@ def get_query_args(query_args=None):
         query_args = {}
     return query_args
 
-
 def _get_response(request, auth, template):
     retry_timeout = 3
     errors = []
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
     # We'll make requests in a loop so we can
     # delay and retry in the case of rate-limiting
     while True:
         should_continue = False
         try:
-            r = urlopen(request)
+            r = urlopen(request, context=ctx)
         except HTTPError as exc:
             errors, should_continue = _request_http_error(exc, auth, errors)  # noqa
             r = exc
